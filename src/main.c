@@ -112,62 +112,119 @@ int init(void)
 	return 1;
 }
 
+void snip_sprite(int x, int y, int w, int h)
+{
+	printf("Spr $%X: (%d, %d) --> (%d, %d)\n", spr_idx, x, y, w, h);
+	al_draw_filled_rectangle(x + 0.1, y + 0.1, x + w + 0.1, y + h + 0.1, al_map_rgb(0,0,0));
+	for (int i = 0; i < 15; i++)
+	{
+		flip();
+	}
+
+	al_set_target_bitmap(spr_buffer);
+	al_draw_filled_rectangle(x + 0.1, y + 0.1, x + w + 0.1, y + h + 0.1, transparent_color);
+	al_set_target_bitmap(main_buffer);
+
+
+	al_draw_bitmap(spr_buffer, 0, 0, 0);
+	flip();
+	spr_idx++;
+}
+
 void claim(void)
 {
 	unsigned int orig_x, orig_y;
 	unsigned int w, h;
 	// First, find topmost line to have data taken from it
-	printf("Finding top line\n");
-	for (orig_y = 0; orig_y < SPR_H; orig_y++)
+	//printf("Finding top line\n");
+	for (orig_y = 0; orig_y < SPR_H; orig_y += 1)
 	{
 		if (!area_is_empty(0, orig_y, SPR_W, orig_y+1))
 		{
-			printf("Spr $%X: Top at %d\n", spr_idx, orig_y);
+			//printf("Spr $%X: Top at %d\n", spr_idx, orig_y);
 			break;
 		}
 	}
 
-	// Now, seek rightwards until the left side is found
-	printf("Finding left side\n");
-	for (orig_x = 0; orig_x < SPR_W; orig_x++)
+	orig_x = 0;
+	// Now that the left is found, eat away the row
+	do
 	{
-		if (!area_is_empty(orig_x, orig_y, orig_x+1, orig_y+1+32))
+		h = 32;
+		w = 32;
+		//printf("Finding left side\n");
+		for (orig_x; orig_x < SPR_W; orig_x++)
 		{
-			printf("Spr $%X: Left at %d\n", spr_idx, orig_x);
-			break;
+			al_set_target_bitmap(main_buffer);
+			if (!area_is_empty(orig_x, orig_y, orig_x+1, orig_y+h))
+			{
+				//printf("Spr $%X: Left at %d\n", spr_idx, orig_x);
+				break;
+			}
 		}
-	}
-
-	// TODO: Do this in a less stupid way
-	// How far to the right should we reach?
-	h = 32;
-	w = 32;
-	while (w > 8)
-	{
-		if (area_is_empty(orig_x, orig_y, orig_x+1+w, orig_y+1+32))
+		while (w > 8)
 		{
-			w -= 1;
+			// Shrink width as much as possible
+			if (area_is_empty(orig_x+w-1, orig_y, orig_x+w, orig_y+h))
+			{
+				w -= 1;
+			}
+			else
+			{
+				break;
+			}
 		}
-		else
+		// Now try to close in on Y
+		unsigned int ycopy = orig_y;
+
+		// Below
+		if (!area_is_empty(orig_x, ycopy+24, orig_x+w, ycopy+32))
 		{
-			break;
+			goto chk_top;
 		}
+		h -= 8;
+		if (!area_is_empty(orig_x, ycopy+16, orig_x+w, ycopy+24))
+		{
+			goto chk_top;
+		}
+		h -= 8;
+		if (!area_is_empty(orig_x, ycopy+8, orig_x+w, ycopy+16))
+		{
+			goto chk_top;
+		}
+		h -= 8;
+
+chk_top:
+		// Above
+		if (h <= 8 || !area_is_empty(orig_x, ycopy, orig_x+w, ycopy+8))
+		{
+			goto do_snip;
+		}
+		printf("A\n");
+		ycopy += 8;
+		if (h <= 16 || !area_is_empty(orig_x, ycopy, orig_x+w, ycopy+8))
+		{
+			goto do_snip;
+		}
+		printf("B\n");
+		ycopy += 8;
+		if (h <= 24 || !area_is_empty(orig_x, ycopy, orig_x+w, ycopy+8))
+		{
+			goto do_snip;
+		}
+		printf("C\n");
+		ycopy += 8;
+
+do_snip:
+		h -= ycopy - orig_y;
+		
+		if (!area_is_empty(orig_x, ycopy, orig_x+w, orig_y+h))
+		{
+			snip_sprite(orig_x, ycopy, w, h);
+		}
+		orig_x += w;
 	}
-	w = (w+7) & 0xFFF8;
-	printf("Spr $%X: Width is %d\n", spr_idx, w);
-
-	printf("Spr $%X: (%d, %d)\n", spr_idx, orig_x, orig_y);
-
-	al_set_target_bitmap(spr_buffer);
-	al_draw_filled_rectangle(orig_x + 0.1, orig_y + 0.1, orig_x + w + 0.1, orig_y + h + 0.1, transparent_color);
-	al_set_target_bitmap(main_buffer);
-
-
-	al_draw_bitmap(spr_buffer, 0, 0, 0);
-	for (int i = 0; i < 30; i++)
-	{
-		flip();
-	}
+	while (!area_is_empty(orig_x, orig_y, SPR_W, orig_y + h));
 }
 
 void place_sprites(void)

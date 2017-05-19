@@ -2,6 +2,10 @@
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_image.h>
+#include <pthread.h>
+#include "pcx.h"
+
+typedef PcxFile pcx_t;
 
 #define SPR_W 256
 #define SPR_H 128
@@ -9,6 +13,8 @@
 
 #define MIN(x, y) (x < y ? x : y)
 #define MAX(x, y) (x > y ? x : y)
+
+
 
 typedef struct sprite_t
 {
@@ -19,6 +25,7 @@ typedef struct sprite_t
 
 sprite_t sprites[MAX_SPR];
 unsigned int spr_idx = 0;
+pcx_t pcx_data;
 
 ALLEGRO_DISPLAY *display;
 ALLEGRO_BITMAP *main_buffer;
@@ -84,6 +91,7 @@ int init(void)
 		fprintf(stderr, "Couldn't initialize primitives addon.\n");
 		return 0;
 	}
+	/*
 	al_set_new_bitmap_flags(ALLEGRO_VIDEO_BITMAP);
 	display = al_create_display(SPR_W, SPR_H);
 	if (!display)
@@ -98,36 +106,38 @@ int init(void)
 		al_destroy_display(display);
 		return 0;
 	}
+	*/
 	al_set_new_bitmap_flags(ALLEGRO_MEMORY_BITMAP);
 	spr_buffer = al_load_bitmap(spr_fname);
 	if (!spr_buffer)
 	{
 		fprintf(stderr, "Couldn't load sprite `%s`.\n", spr_fname);
-		al_destroy_bitmap(main_buffer);
-		al_destroy_display(display);
+		//al_destroy_bitmap(main_buffer);
+		//al_destroy_display(display);
 		return 0;
 	}
 	printf("Initialized.\n");
-	al_set_target_bitmap(main_buffer);
+	//al_set_target_bitmap(main_buffer);
 	return 1;
 }
 
 void snip_sprite(int x, int y, int w, int h)
 {
 	printf("Spr $%X: (%d, %d) --> (%d, %d)\n", spr_idx, x, y, w, h);
+	/*
 	al_draw_filled_rectangle(x + 0.1, y + 0.1, x + w + 0.1, y + h + 0.1, al_map_rgb(0,0,0));
-	for (int i = 0; i < 15; i++)
+	for (int i = 0; i < 35; i++)
 	{
 		flip();
-	}
+	}*/
 
 	al_set_target_bitmap(spr_buffer);
 	al_draw_filled_rectangle(x + 0.1, y + 0.1, x + w + 0.1, y + h + 0.1, transparent_color);
-	al_set_target_bitmap(main_buffer);
+	//al_set_target_bitmap(main_buffer);
 
 
-	al_draw_bitmap(spr_buffer, 0, 0, 0);
-	flip();
+	//al_draw_bitmap(spr_buffer, 0, 0, 0);
+	//flip();
 	spr_idx++;
 }
 
@@ -174,6 +184,7 @@ void claim(void)
 				break;
 			}
 		}
+		w = (w + 7) & 0xFFF8;
 		// Now try to close in on Y
 		unsigned int ycopy = orig_y;
 
@@ -200,19 +211,16 @@ chk_top:
 		{
 			goto do_snip;
 		}
-		printf("A\n");
 		ycopy += 8;
 		if (h <= 16 || !area_is_empty(orig_x, ycopy, orig_x+w, ycopy+8))
 		{
 			goto do_snip;
 		}
-		printf("B\n");
 		ycopy += 8;
 		if (h <= 24 || !area_is_empty(orig_x, ycopy, orig_x+w, ycopy+8))
 		{
 			goto do_snip;
 		}
-		printf("C\n");
 		ycopy += 8;
 
 do_snip:
@@ -232,14 +240,6 @@ void place_sprites(void)
 	// Get transparent color from top-left of the image
 	transparent_color = al_get_pixel(spr_buffer, 0, 0);
 
-	if (area_is_empty(0, 0, 8, 8))
-	{
-		printf("Top left is empty\n");
-	}
-	if (area_is_empty(0, 0, 256, 128))
-	{
-		printf("Whole image is empty\n");
-	}
 	while (!area_is_empty(0, 0, SPR_W, SPR_H))
 	{
 		claim();
@@ -248,6 +248,7 @@ void place_sprites(void)
 
 int main(int argc, char **argv)
 {
+	printf("Genesis metasprite creator\n");
 	if (argc < 2)
 	{
 		printf("Usage: %s <mysprite.pcx>\n", argv[0]);
@@ -260,13 +261,18 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
+	printf("Placing sprites\n");
 	place_sprites();
-
+	al_destroy_bitmap(spr_buffer);
+	printf("Reading PCX data\n");
+	pcx_new(&pcx_data, argv[1]);
+	printf("Done.\n");
+/*
 	while(1)
 	{
 		al_draw_bitmap(spr_buffer, 0, 0, 0);
 		flip();
 	}
-
+*/
 	return 0;
 }

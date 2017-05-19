@@ -91,7 +91,7 @@ int init(void)
 		fprintf(stderr, "Couldn't initialize primitives addon.\n");
 		return 0;
 	}
-	/*
+	
 	al_set_new_bitmap_flags(ALLEGRO_VIDEO_BITMAP);
 	display = al_create_display(SPR_W, SPR_H);
 	if (!display)
@@ -106,38 +106,42 @@ int init(void)
 		al_destroy_display(display);
 		return 0;
 	}
-	*/
+	
 	al_set_new_bitmap_flags(ALLEGRO_MEMORY_BITMAP);
 	spr_buffer = al_load_bitmap(spr_fname);
 	if (!spr_buffer)
 	{
 		fprintf(stderr, "Couldn't load sprite `%s`.\n", spr_fname);
-		//al_destroy_bitmap(main_buffer);
-		//al_destroy_display(display);
+		al_destroy_bitmap(main_buffer);
+		al_destroy_display(display);
 		return 0;
 	}
 	printf("Initialized.\n");
-	//al_set_target_bitmap(main_buffer);
+	al_set_target_bitmap(main_buffer);
 	return 1;
 }
 
 void snip_sprite(int x, int y, int w, int h)
 {
 	printf("Spr $%X: (%d, %d) --> (%d, %d)\n", spr_idx, x, y, w, h);
-	/*
-	al_draw_filled_rectangle(x + 0.1, y + 0.1, x + w + 0.1, y + h + 0.1, al_map_rgb(0,0,0));
+	sprites[spr_idx].x = x;
+	sprites[spr_idx].y = y;
+	sprites[spr_idx].w = w;
+	sprites[spr_idx].h = h;
+	
+	al_draw_filled_rectangle(x, y, x + w, y + h, al_map_rgb(0,0,0));
 	for (int i = 0; i < 35; i++)
 	{
 		flip();
-	}*/
+	}
 
 	al_set_target_bitmap(spr_buffer);
-	al_draw_filled_rectangle(x + 0.1, y + 0.1, x + w + 0.1, y + h + 0.1, transparent_color);
-	//al_set_target_bitmap(main_buffer);
+	al_draw_filled_rectangle(x, y, x + w, y + h, transparent_color);
+	al_set_target_bitmap(main_buffer);
 
 
-	//al_draw_bitmap(spr_buffer, 0, 0, 0);
-	//flip();
+	al_draw_bitmap(spr_buffer, 0, 0, 0);
+	flip();
 	spr_idx++;
 }
 
@@ -146,12 +150,12 @@ void claim(void)
 	unsigned int orig_x, orig_y;
 	unsigned int w, h;
 	// First, find topmost line to have data taken from it
-	//printf("Finding top line\n");
+	printf("Finding top line\n");
 	for (orig_y = 0; orig_y < SPR_H; orig_y += 1)
 	{
 		if (!area_is_empty(0, orig_y, SPR_W, orig_y+1))
 		{
-			//printf("Spr $%X: Top at %d\n", spr_idx, orig_y);
+			printf("Spr $%X: Top at %d\n", spr_idx, orig_y);
 			break;
 		}
 	}
@@ -162,13 +166,13 @@ void claim(void)
 	{
 		h = 32;
 		w = 32;
-		//printf("Finding left side\n");
+		printf("Finding left side\n");
 		for (orig_x; orig_x < SPR_W; orig_x++)
 		{
 			al_set_target_bitmap(main_buffer);
 			if (!area_is_empty(orig_x, orig_y, orig_x+1, orig_y+h))
 			{
-				//printf("Spr $%X: Left at %d\n", spr_idx, orig_x);
+				printf("Spr $%X: Left at %d\n", spr_idx, orig_x);
 				break;
 			}
 		}
@@ -246,12 +250,76 @@ void place_sprites(void)
 	}
 }
 
+// Cut an 8x8 cell out of PCX data
+void pcx_make_tile(unsigned int x, unsigned int y, pcx_t *pcx, FILE *f)
+{
+	uint8_t tdata[32];
+	for (unsigned int i = 0; i < 8; i++)
+	{
+		unsigned int y_idx = (i + y) * pcx->w;
+		for (unsigned int j = 0; j < 8; j++)
+		{
+			unsigned int t_idx = (4 * i) + (j / 2);
+			unsigned int x_idx = x + j;
+			if ((y+i < pcx->h) && (x+j < pcx->w))
+			{
+				// Upper nybble
+				if (j % 2 == 0)
+				{
+					tdata[t_idx] = (pcx->data[y_idx + x_idx] & 0x0F) << 4;
+				}
+				// Lower nybble
+				else
+				{
+					tdata[t_idx] |= pcx->data[y_idx + x_idx] & 0x0F;
+				}
+			} 
+			else 
+			{
+				// Upper nybble
+				if (j % 2 == 0)
+				{
+					tdata[t_idx] = 0;
+				}
+				// Lower nybble
+				else
+				{
+					tdata[t_idx] &= 0xF0;
+				}
+			}
+		}
+	}
+	fwrite((void *)tdata, 32, 1, f);
+}
+
+// Create binary sprite data file from PCX choppings
+void dump_sprite(sprite_t *spr, FILE *f)
+{
+	for (int x = 0; x < spr->w; x += 8)
+	{
+		for (int y = 0; y < spr->h; y += 8)
+		{
+			printf("(%d,%d) --> (%d, %d)\n", spr->x, spr->y, spr->w, spr->h);
+			pcx_make_tile(spr->x+x, spr->y+y, &pcx_data, f);
+		}
+	}
+}
+
+void create_spritedata(FILE *f)
+{
+	for (unsigned int i = 0; i < spr_idx; i++)
+	{
+		printf("Dumping sprite data %X\n", i);
+		dump_sprite(&sprites[i], f);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	printf("Genesis metasprite creator\n");
-	if (argc < 2)
+	if (argc < 3)
 	{
-		printf("Usage: %s <mysprite.pcx>\n", argv[0]);
+		printf("Usage: %s <mysprite.pcx> <outname>\n", argv[0]);
 		return 0;
 	}
 
@@ -267,12 +335,18 @@ int main(int argc, char **argv)
 	printf("Reading PCX data\n");
 	pcx_new(&pcx_data, argv[1]);
 	printf("Done.\n");
-/*
-	while(1)
-	{
-		al_draw_bitmap(spr_buffer, 0, 0, 0);
-		flip();
-	}
-*/
+
+	char *outname_bin = (char *)malloc(sizeof(char) * (strlen(argv[2] + 4)));
+	sprintf(outname_bin, "%s.bin", argv[2]);
+
+	char *outname_dat = (char *)malloc(sizeof(char) * (strlen(argv[2] + 4)));
+	sprintf(outname_dat, "%s.dat", argv[2]);
+
+	FILE *fout = fopen(outname_bin, "wb");
+	create_spritedata(fout);
+	fclose(fout);
+
+	free(outname_bin);
+	free(outname_dat);
 	return 0;
 }

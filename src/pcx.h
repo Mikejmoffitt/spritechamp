@@ -1,6 +1,9 @@
 #ifndef PCX_H_
 #define PCX_H_
 
+#include <stdlib.h>
+#include <stdint.h>
+
 typedef struct {
   uint8_t bpp;
   uint16_t w, h;

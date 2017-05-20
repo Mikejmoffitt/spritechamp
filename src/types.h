@@ -1,0 +1,30 @@
+#ifndef TYPES_H
+#define TYPES_H
+#include <stdint.h>
+#include "pcx.h"
+
+#define MIN(x, y) (x < y ? x : y)
+#define MAX(x, y) (x > y ? x : y)
+#define MAX_SPR 1
+typedef PcxFile pcx_t;
+
+#define PAK_SIZE_INVAL 0xFF
+
+typedef struct sprite_t
+{
+	// Region to snip from
+	unsigned int x, y;
+	unsigned int w, h;
+} sprite_t;
+
+typedef struct pak_entry_t
+{
+	char id[4];
+	uint8_t data_idx[4]; // 32-bit big-endian int
+	int8_t x[MAX_SPR]; // Relative to (SPR_W/2)-1
+	int8_t y[MAX_SPR]; // Relative to SPR_H-1
+	uint8_t size[MAX_SPR]; // 4-bit format native to MD
+} pak_entry_t;
+
+
+#endif

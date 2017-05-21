@@ -1,8 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <allegro5/allegro.h>
-#include <allegro5/allegro_primitives.h>
-#include <allegro5/allegro_image.h>
 #include <string.h>
 #include <unistd.h>
 #include "pcx.h"
@@ -10,63 +7,6 @@
 #include "snipping.h"
 #include "pcx_proc.h"
 
-
-ALLEGRO_DISPLAY *display;
-ALLEGRO_BITMAP *main_buffer;
-
-#define DISP_W 256
-#define DISP_H 128
-
-#ifdef DEBUG_VIS
-void flip(void)
-{
-	al_set_target_backbuffer(display);
-	al_draw_bitmap(main_buffer, 0, 0, 0);
-	al_flip_display();
-	al_set_target_bitmap(main_buffer);
-}
-#endif
-
-// TODO: Now that the idea works allegro should be ripped out
-int init(void)
-{
-	if (!al_init())
-	{
-		fprintf(stderr, "Couldn't initialize Allegro 5.\n");
-		return 0;
-	}
-	if (!al_init_image_addon())
-	{
-		fprintf(stderr, "Couldn't load image addon.\n");
-		return 0;
-	}
-	if (!al_init_primitives_addon())
-	{
-		fprintf(stderr, "Couldn't initialize primitives addon.\n");
-		return 0;
-	}
-#ifdef DEBUG_VIS
-	al_set_new_bitmap_flags(ALLEGRO_VIDEO_BITMAP);
-	display = al_create_display(DISP_W, DISP_H);
-	if (!display)
-	{
-		fprintf(stderr, "Couldn't create display.\n");
-		return 0;
-	}
-	main_buffer = al_create_bitmap(DISP_W, DISP_H);
-	if (!main_buffer)
-	{
-		fprintf(stderr, "Couldn't create main buffer,.\n");
-		al_destroy_display(display);
-		return 0;
-	}
-	al_set_target_bitmap(main_buffer);
-	al_clear_to_color(al_map_rgb(0,0,0));
-#endif
-
-	// printf("Initialized.\n");
-	return 1;
-}
 // Dump all sprite metadata.
 void write_metadata(FILE *f, sprite_t *sprites, unsigned int w,
                     unsigned int h, unsigned int pak_count)
@@ -159,11 +99,6 @@ int main(int argc, char **argv)
 			numfiles = strtol(ret_chk, NULL, 16) + 1;
 		}
 		printf("%s\n", ret_chk);
-	}
-
-	if (!init())
-	{
-		return 0;
 	}
 
 	// Set up file handles

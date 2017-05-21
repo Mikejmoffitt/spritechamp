@@ -1,8 +1,7 @@
 CC := clang
-CFLAGS := -std=c99 -O0 -Isrc -g -Wall
+CFLAGS := -std=c99 -O3 -Isrc -g -Wall
 
-LDFLAGS := `pkg-config --cflags --static --libs allegro-static-5 allegro_image-static-5 allegro_color-static-5 allegro_main-static-5 allegro_primitives-static-5` -pthread
-
+LDFLAGS :=
 SOURCES := $(wildcard src/*.c)
 OBJECTS := $(SOURCES:.c=.o)
 TARGET := spritechamp

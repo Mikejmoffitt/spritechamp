@@ -1,4 +1,4 @@
-CC := clang
+CC := gcc
 CFLAGS := -std=c99 -O3 -Isrc -g -Wall
 
 LDFLAGS :=

@@ -39,6 +39,10 @@ static inline uint8_t get_pixel(pcx_t *pcx, unsigned int x, unsigned int y)
 static void draw_rect(pcx_t *pcx, unsigned int x, unsigned int y,
                       unsigned int x2, unsigned int y2, uint8_t val)
 {
+	x = MAX(x, 0);
+	y = MAX(y, 0);
+	x2 = MIN(x2, pcx->w);
+	y2 = MIN(y2, pcx->h);
 	for (unsigned int i = y; i < y2; i++)
 	{
 		for (unsigned int j = x; j < x2; j++)

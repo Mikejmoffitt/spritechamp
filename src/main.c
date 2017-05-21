@@ -123,7 +123,7 @@ int main(int argc, char **argv)
 
 	unsigned int fname_idx = 0;
 
-	printf("Files to pack: %d\n", numfiles);
+	printf("Files to pack: %X\n", numfiles);
 	for (unsigned int i = 0; i < numfiles; i++)
 	{
 		pcx_t pcx_data;
@@ -163,7 +163,7 @@ int main(int argc, char **argv)
 		fname_idx++;
 
 		// 0) Load PCX file
-		//printf("# Loading PCX data...\n");
+		printf("# Loading PCX data...\n");
 		if (!pcx_new(&pcx_data, spr_fname))
 		{
 			fclose(fmeta_out);
@@ -172,21 +172,21 @@ int main(int argc, char **argv)
 		}
 
 		// 1) Load sprite bitmap, determine sprite cuts
-		//printf("# Cutting sprites from bitmap\n");
+		printf("# Cutting sprites from bitmap\n");
 		place_sprites(spr_fname, sprites);
 
 		// 2) Dump pak header info to meta file
-		//printf("# Writing metadata\n");
+		printf("# Writing metadata\n");
 		write_metadata(fmeta_out, sprites, pcx_data.w, pcx_data.h, numfiles);
 
 		// 3) Dump pak tile data to tile file
-		//printf("# Dumping pak tile data\n");
+		printf("# Dumping pak tile data\n");
 		pcx_dump_tiledata(&pcx_data, sprites, ftile_out);
 
-		//printf("# Freeing PCX\n");
+		printf("# Freeing PCX\n");
 		// 4) Free dynamic memory from PCX file
 		pcx_destroy(&pcx_data);
-		//printf("\n");
+		printf("\n");
 	}
 
 	printf("Finished.\n");

@@ -5,7 +5,7 @@
 
 #define MIN(x, y) (x < y ? x : y)
 #define MAX(x, y) (x > y ? x : y)
-#define MAX_SPR 1
+#define MAX_SPR 24
 typedef PcxFile pcx_t;
 
 #define PAK_SIZE_INVAL 0xFF

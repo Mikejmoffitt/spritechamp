@@ -87,13 +87,11 @@ void snip_sprite(sprite_t *sprites, int x, int y, int w, int h)
 {
 	if (spr_idx >= MAX_SPR)
 	{
-		printf("Warning: Overrunning max sprite count of %d.\n", spr_idx);
-		sprites[spr_idx].w = 0;
-		sprites[spr_idx].h = 0;
+		//printf("Warning: Overrunning max sprite count of %d.\n", spr_idx);
 	}
 	else
 	{
-		printf("Spr $%X: (%d, %d) --> (%d, %d)\n", spr_idx, x, y, w, h);
+		//printf("Spr $%X: (%d, %d) --> (%d, %d)\n", spr_idx, x, y, w, h);
 		sprites[spr_idx].x = x;
 		sprites[spr_idx].y = y;
 		sprites[spr_idx].w = w;
@@ -103,7 +101,7 @@ void snip_sprite(sprite_t *sprites, int x, int y, int w, int h)
 	spr_idx++;
 #ifdef DEBUG_VIS
 	al_draw_filled_rectangle(x, y, x + w, y + h, al_map_rgb(0,0,0));
-	for (int i = 0; i < 1; i++)
+	for (int i = 0; i < 2; i++)
 	{
 		flip();
 	}
@@ -127,14 +125,14 @@ static void claim(sprite_t *sprites)
 	unsigned int w, h;
 	unsigned int img_w, img_h;
 	img_w = al_get_bitmap_width(spr_buffer);
-	img_h = al_get_bitmap_width(spr_buffer);
+	img_h = al_get_bitmap_height(spr_buffer);
 	// First, find topmost line to have data taken from it
-	printf("Finding top line\n");
+	//printf("Finding top line\n");
 	for (orig_y = 0; orig_y < img_h; orig_y += 1)
 	{
 		if (!area_is_empty(0, orig_y, img_w, orig_y+1))
 		{
-			printf("Spr $%X: Top at %d\n", spr_idx, orig_y);
+			//printf("Spr $%X: Top at %d\n", spr_idx, orig_y);
 			break;
 		}
 	}
@@ -145,14 +143,15 @@ static void claim(sprite_t *sprites)
 	{
 		h = 32;
 		w = 32;
-		printf("Finding left side\n");
-		for ((void)orig_x; orig_x < img_w; orig_x++)
+		//printf("Finding left side\n");
+		while (orig_x < img_w)
 		{
 			if (!area_is_empty(orig_x, orig_y, orig_x+1, orig_y+h))
 			{
-				printf("Spr $%X: Left at %d\n", spr_idx, orig_x);
+				//printf("Spr $%X: Left at %d\n", spr_idx, orig_x);
 				break;
 			}
+			orig_x++;
 		}
 		while (w > 8)
 		{

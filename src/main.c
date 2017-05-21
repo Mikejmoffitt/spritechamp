@@ -12,8 +12,6 @@
 /* Configuration */
 
 
-
-
 ALLEGRO_DISPLAY *display;
 ALLEGRO_BITMAP *main_buffer;
 
@@ -30,6 +28,7 @@ void flip(void)
 }
 #endif
 
+// TODO: Now that the idea works allegro should be ripped out
 int init(void)
 {
 	if (!al_init())
@@ -66,7 +65,7 @@ int init(void)
 	al_clear_to_color(al_map_rgb(0,0,0));
 #endif
 
-	printf("Initialized.\n");
+	// printf("Initialized.\n");
 	return 1;
 }
 // Dump all sprite metadata.
@@ -113,7 +112,6 @@ void write_metadata(FILE *f, sprite_t *sprites, unsigned int w, unsigned int h)
 
 int main(int argc, char **argv)
 {
-	printf("Genesis metasprite creator\n");
 	if (argc < 3)
 	{
 		printf("Usage: %s <metafname> <tilefname> <files...>\n", argv[0]);
@@ -125,6 +123,9 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
+	unsigned int numfiles = argc - 3;
+
+	// Set up file handles
 	FILE *fmeta_out;
 	fmeta_out = fopen(argv[1], "wb");
 	if (!fmeta_out)
@@ -132,7 +133,6 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Couldn't open %s for writing!\n", argv[1]);
 		return 1;
 	}
-	fclose(fmeta_out);
 	FILE *ftile_out;
 	ftile_out = fopen(argv[2], "wb");
 	if (!ftile_out)
@@ -140,59 +140,41 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Couldn't open %s for writing!\n", argv[2]);
 		return 1;
 	}
-	fclose(ftile_out);
-	printf("Meta: %p Tile: %p\n", fmeta_out, ftile_out);
 
-	unsigned int numfiles = argc - 3;
+	// printf("Meta: %p Tile: %p\n", fmeta_out, ftile_out);
+
+	// process each file
 	printf("Files to pack: %d\n", numfiles);
-
 	for (unsigned int i = 0; i < numfiles; i++)
 	{
 		const char *spr_fname = argv[i+3];
-		sprite_t sprites[MAX_SPR];
 		pcx_t pcx_data;
-		printf("Processing %d: %s\n", i, spr_fname);
-		printf("Meta: %p Tile: %p\n", fmeta_out, ftile_out);
+		sprite_t sprites[MAX_SPR];
+		printf("[ \"%s\"  - #%d]\n", spr_fname, i);
 		
 		// 0) Load PCX file
-		printf("Loading PCX data...\n");
-		printf("Meta: %p Tile: %p\n", fmeta_out, ftile_out);
+		printf("# Loading PCX data...\n");
 		pcx_new(&pcx_data, spr_fname);
 
 		// 1) Load sprite bitmap, determine sprite cuts
-		printf("Cutting sprites from bitmap\n");
-		printf("Meta: %p Tile: %p\n", fmeta_out, ftile_out);
+		printf("# Cutting sprites from bitmap\n");
 		place_sprites(spr_fname, sprites);
 
 		// 2) Dump pak header info to meta file
-		printf("Writing metadata\n" );
-		fmeta_out = fopen(argv[1], "ab");
-		if (!fmeta_out)
-		{
-			fprintf(stderr, "Couldn't open %s for writing!\n", argv[1]);
-			return 1;
-		}
-		printf("Meta: %p Tile: %p\n", fmeta_out, ftile_out);
+		printf("# Writing metadata\n" );
 		write_metadata(fmeta_out, sprites, pcx_data.w, pcx_data.h);
-		fclose(fmeta_out);
 
 		// 3) Dump pak tile data to tile file
-		printf("Dumping pak tile data\n");
-		ftile_out = fopen(argv[2], "ab");
-		if (!ftile_out)
-		{
-			fprintf(stderr, "Couldn't open %s for writing!\n", argv[2]);
-			return 1;
-		}
-		printf("Meta: %p Tile: %p\n", fmeta_out, ftile_out);
+		printf("# Dumping pak tile data\n");
 		pcx_dump_tiledata(&pcx_data, sprites, ftile_out);
-		fclose(ftile_out);
 
-		printf("Freeing PCX\n");
+		printf("# Freeing PCX\n");
 		// 4) Free dynamic memory from PCX file
 		pcx_destroy(&pcx_data);
+		printf("\n");
 	}
 
+	printf("Finished.\n");
 	fclose(fmeta_out);
 	fclose(ftile_out);
 	return 0;

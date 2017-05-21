@@ -74,17 +74,16 @@ static int area_is_empty(pcx_t *pcx, int x, int y, int x2, int y2)
 
 // Creates a sprite entry as specified, and then removes the region from the
 // tested bitmap.
-void snip_sprite(pcx_t *pcx, unsigned int *spr_idx, sprite_t *sprites, int x, int y)
+void snip_sprite(pcx_t *pcx, unsigned int *spr_idx, sprite_t *sprites, int x, int y,
+                 unsigned int w, unsigned int h)
 {
-	unsigned int w = pcx->w;
-	unsigned int h = pcx->h;
 	if (*spr_idx >= MAX_SPR)
 	{
-		//printf("Warning: Overrunning max sprite count of %d.\n", *spr_idx);
+		printf("Warning: Overrunning max sprite count of %d.\n", *spr_idx);
 	}
 	else
 	{
-		//printf("Spr $%X: (%d, %d) --> (%d, %d)\n", *spr_idx, x, y, w, h);
+		printf("Spr $%X: (%d, %d) --> (%d, %d)\n", *spr_idx, x, y, w, h);
 		sprites[*spr_idx].x = x;
 		sprites[*spr_idx].y = y;
 		sprites[*spr_idx].w = w;
@@ -100,33 +99,34 @@ void snip_sprite(pcx_t *pcx, unsigned int *spr_idx, sprite_t *sprites, int x, in
 static void claim(pcx_t *pcx, unsigned int *spr_idx, sprite_t *sprites)
 {
 	unsigned int orig_x, orig_y;
-	unsigned int w, h;
 	unsigned int img_w, img_h;
 	img_w = pcx->w;
 	img_h = pcx->h;
 	// First, find topmost line to have data taken from it
-	//printf("Finding top line\n");
+	printf("Finding top line\n");
 	for (orig_y = 0; orig_y < img_h; orig_y += 1)
 	{
 		if (!area_is_empty(pcx, 0, orig_y, img_w, orig_y+1))
 		{
-			//printf("Spr $%X: Top at %d\n", *spr_idx, orig_y);
+			printf("Spr $%X: Top at %d\n", *spr_idx, orig_y);
 			break;
 		}
 	}
 
+	unsigned int h = 32;
+	unsigned int w = 32;
 	orig_x = 0;
 	// Now that the left is found, eat away the row
 	do
 	{
-		h = 32;
 		w = 32;
-		//printf("Finding left side\n");
+		h = 32;
+		printf("Finding left side\n");
 		while (orig_x < img_w)
 		{
 			if (!area_is_empty(pcx, orig_x, orig_y, orig_x+1, orig_y+h))
 			{
-				//printf("Spr $%X: Left at %d\n", *spr_idx, orig_x);
+				printf("Spr $%X: Left at %d\n", *spr_idx, orig_x);
 				break;
 			}
 			orig_x++;
@@ -187,7 +187,7 @@ do_snip:
 
 		if (!area_is_empty(pcx, orig_x, ycopy, orig_x+w, orig_y+h))
 		{
-			snip_sprite(pcx, spr_idx, sprites, orig_x, ycopy);
+			snip_sprite(pcx, spr_idx, sprites, orig_x, ycopy, w, h);
 		}
 		orig_x += w;
 	}

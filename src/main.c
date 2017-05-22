@@ -22,11 +22,6 @@ void write_metadata(FILE *f, sprite_t *sprites, unsigned int w,
 	pak.numtiles[0] = 0;
 	pak.numtiles[1] = 0;
 	
-	// Record starting tile number for this metasprite
-	uint8_t *tile_idx_b = (uint8_t *)&tile_idx;
-	pak.tile_idx[0] = tile_idx_b[1];
-	pak.tile_idx[1] = tile_idx_b[0];
-
 	// Tile data source within binary blob
 	uint32_t tile_loc_adjusted = (sizeof(pak_entry_t) * pak_count) + (tile_idx * 32);
 	uint8_t *data_idx = (uint8_t *)&tile_loc_adjusted;

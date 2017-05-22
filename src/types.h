@@ -20,7 +20,6 @@ typedef struct sprite_t
 typedef struct pak_entry_t
 {
 	uint8_t data_idx[4]; // Index within pak for data
-	uint8_t tile_idx[2]; // Tile index from VRAM base
 	uint8_t numtiles[2]; // Tile count (size / 32)
 	int8_t x[MAX_SPR]; // Relative to (SPR_W/2)-1
 	int8_t y[MAX_SPR]; // Relative to SPR_H-1

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 // Cut an 8x8 cell out of PCX data, throw it at a file
-void pcx_make_tile(pcx_t *pcx, unsigned int x, unsigned int y, FILE *f)
+size_t pcx_make_tile(pcx_t *pcx, unsigned int x, unsigned int y, FILE *f)
 {
 	uint8_t tdata[32];
 	for (unsigned int i = 0; i < 8; i++)
@@ -42,11 +42,13 @@ void pcx_make_tile(pcx_t *pcx, unsigned int x, unsigned int y, FILE *f)
 		}
 	}
 	fwrite((void *)tdata, 32, 1, f);
+	return 32;
 }
 
 // Take requisite tiles from a sprite and dump tiledata
-void pcx_dump_sprite_tiles(pcx_t *pcx, sprite_t *spr, FILE *f)
+size_t pcx_dump_sprite_tiles(pcx_t *pcx, sprite_t *spr, FILE *f)
 {
+	size_t size = 0;
 	unsigned int spr_count = 0;
 	//printf("Tile [%d, %d : %d x %d]:\n", spr->x, spr->y, spr->w, spr->h);
 	for (int x = 0; x < spr->w; x += 8)
@@ -60,24 +62,27 @@ void pcx_dump_sprite_tiles(pcx_t *pcx, sprite_t *spr, FILE *f)
 			else
 			{
 				//printf(" %02d, %02d (#%d)\n", x, y, spr_count);
-				pcx_make_tile(pcx, spr->x+x, spr->y+y, f);
+				size += pcx_make_tile(pcx, spr->x+x, spr->y+y, f);
 			}
 			spr_count++;
 		}
 	}
+	return size;
 }
 
 // Dump all sprite tiledata.
-void pcx_dump_tiledata(pcx_t *pcx_data, sprite_t *sprites, FILE *f)
+size_t pcx_dump_tiledata(pcx_t *pcx_data, sprite_t *sprites, FILE *f)
 {
+	size_t size = 0;
 	for (unsigned int i = 0; i < MAX_SPR; i++)
 	{
 		if (sprites[i].w == 0 || sprites[i].h == 0)
 		{
-			return;
+			break;
 		}
-		pcx_dump_sprite_tiles(pcx_data, &sprites[i], f);
+		size += pcx_dump_sprite_tiles(pcx_data, &sprites[i], f);
 	}
+	return size;
 }
 
 void pcx_destroy(pcx_t *pcx)

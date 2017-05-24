@@ -20,7 +20,7 @@ typedef struct sprite_t
 typedef struct pak_entry_t
 {
 	uint8_t data_idx[4]; // Index within pak for data
-	uint8_t numtiles[2]; // Tile count (size / 32)
+	uint8_t tiledata_size[2]; // Tile data size
 	int8_t x[MAX_SPR]; // Relative to (SPR_W/2)-1
 	int8_t y[MAX_SPR]; // Relative to SPR_H-1
 	uint8_t size[MAX_SPR]; // 4-bit format native to MD
